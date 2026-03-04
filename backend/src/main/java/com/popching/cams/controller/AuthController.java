@@ -108,4 +108,10 @@ public class AuthController {
 
         return ResponseEntity.ok("Password changed successfully");
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/me")
+    public ResponseEntity<?> getMe() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return ResponseEntity.ok(authentication.getAuthorities());
+    }
 }

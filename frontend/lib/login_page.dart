@@ -1,8 +1,6 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,19 +13,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _storage = const FlutterSecureStorage(); // Initialize secure storage
   bool _isLoading = false;
   String? _errorMessage;
-
-  String get _loginUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080/api/auth/signin';
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080/api/auth/signin';
-    } else {
-      return 'http://localhost:8080/api/auth/signin';
-    }
-  }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
@@ -40,51 +27,24 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse(_loginUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'usernameOrEmail': _usernameController.text,
-          'password': _passwordController.text,
-        }),
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final success = await authProvider.login(
+        _usernameController.text,
+        _passwordController.text,
       );
 
-      if (response.statusCode == 200) {
-        // Successful login
-        final responseData = jsonDecode(response.body);
-        final token =
-            responseData['accessToken']; // Assuming the response has accessToken field
-
-        if (token != null) {
-          // Store the token securely
-          await _storage.write(key: 'jwt_token', value: token);
-          debugPrint('Login successful. Token stored securely.');
-        } else {
-          debugPrint('Login successful but no token received.');
-        }
-
+      if (success) {
         if (mounted) {
-          final isDefaultPassword = responseData['isDefaultPassword'];
-          if (isDefaultPassword == 1) {
-            Navigator.pushReplacementNamed(context, '/change-password');
-          } else {
-            Navigator.pushReplacementNamed(
-              context,
-              '/home',
-            ); // Navigate to home
-          }
+          Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
-        // Login failed
         setState(() {
-          _errorMessage = '登入失敗: ${response.body}';
+          _errorMessage = '登入失敗，請檢查帳號密碼。';
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'An error occurred: $e';
+        _errorMessage = '系統發生錯誤: $e';
       });
     } finally {
       if (mounted) {

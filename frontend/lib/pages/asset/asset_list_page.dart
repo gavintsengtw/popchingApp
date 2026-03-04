@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../models/asset_model.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 import 'asset_form_page.dart';
 import '../../config/api_config.dart';
+
+import '../../services/api_service.dart';
 
 class AssetListPage extends StatefulWidget {
   const AssetListPage({super.key});
@@ -15,10 +16,10 @@ class AssetListPage extends StatefulWidget {
 }
 
 class _AssetListPageState extends State<AssetListPage> {
+  final ApiService _apiService = ApiService();
   List<Asset> _assets = [];
   List<Asset> _filteredAssets = [];
   bool _isLoading = true;
-  final _storage = const FlutterSecureStorage();
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -34,23 +35,18 @@ class _AssetListPageState extends State<AssetListPage> {
     });
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      final response = await http.get(
-        Uri.parse(ApiConfig.assetsUrl),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.get('/assets');
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (response != null && response is List) {
         setState(() {
-          _assets = data.map((e) => Asset.fromJson(e)).toList();
+          _assets = response.map((e) => Asset.fromJson(e)).toList();
           _filteredAssets = _assets;
         });
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to load assets: ${response.statusCode}'),
+            const SnackBar(
+              content: Text('Failed to load assets: Invalid response format'),
             ),
           );
         }
@@ -94,21 +90,10 @@ class _AssetListPageState extends State<AssetListPage> {
 
   Future<void> _deleteAsset(String id) async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      final response = await http.delete(
-        Uri.parse('${ApiConfig.assetsUrl}/$id'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      await _apiService.delete('/assets/$id');
 
-      if (response.statusCode == 200) {
-        _fetchAssets();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete: ${response.statusCode}')),
-          );
-        }
-      }
+      // Assuming successful delete returns some response or null if empty
+      _fetchAssets();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -120,15 +105,18 @@ class _AssetListPageState extends State<AssetListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('資產列表'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchAssets),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _navigateToForm(),
-          ),
+          if (authProvider.canAdd)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _navigateToForm(),
+            ),
         ],
       ),
       body: Column(
@@ -184,14 +172,18 @@ class _AssetListPageState extends State<AssetListPage> {
                                   Text('保管人: ${asset.custodian ?? "無"}'),
                                 ],
                               ),
-                              onTap: () => _navigateToForm(asset),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () => _deleteAsset(asset.id),
-                              ),
+                              onTap: authProvider.canEdit
+                                  ? () => _navigateToForm(asset)
+                                  : null,
+                              trailing: authProvider.canDelete
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () => _deleteAsset(asset.id),
+                                    )
+                                  : null,
                             ),
                           );
                         },

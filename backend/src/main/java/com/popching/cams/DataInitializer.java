@@ -16,17 +16,19 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (roleRepository.findByName("ROLE_ADMIN").isEmpty()) {
+        if (!roleRepository.existsByGroupId("admin")) {
             Role adminRole = new Role();
-            adminRole.setName("ROLE_ADMIN");
-            adminRole.setDescription("Administrator");
+            adminRole.setGroupId("admin");
+            adminRole.setName("System Administrator");
+            adminRole.setAdminMark("Y");
             roleRepository.save(adminRole);
         }
 
-        if (roleRepository.findByName("ROLE_USER").isEmpty()) {
+        if (!roleRepository.existsByGroupId("user")) {
             Role userRole = new Role();
-            userRole.setName("ROLE_USER");
-            userRole.setDescription("General User");
+            userRole.setGroupId("user");
+            userRole.setName("Regular User");
+            userRole.setAdminMark("N");
             roleRepository.save(userRole);
         }
     }

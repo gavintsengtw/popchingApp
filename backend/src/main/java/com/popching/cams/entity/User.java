@@ -22,6 +22,7 @@ public class User extends BaseEntity {
     private String username;
 
     @Column(name = "pwd", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(name = "name", nullable = false)
@@ -39,9 +40,12 @@ public class User extends BaseEntity {
     @Column(name = "closemark")
     private String closemark; // 'Y' = closed?, used for enabled/disabled
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "deptid")
-    private Department department;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "baccount_DEPT", joinColumns = @JoinColumn(name = "ID", referencedColumnName = "account"), inverseJoinColumns = @JoinColumn(name = "DEP_NO"))
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "children", "parent" })
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
+    private java.util.Set<Department> departments = new java.util.HashSet<>();
 
     @Column(name = "cruser")
     private String createdBy;
@@ -57,6 +61,12 @@ public class User extends BaseEntity {
 
     @Column(name = "IsDefaultPassword")
     private Integer isDefaultPassword; // 1 = default password, 0 = changed
+
+    @Transient
+    private java.util.List<String> roleIds;
+
+    @Transient
+    private java.util.List<String> roleNames;
 
     public boolean isEnabled() {
         return !"Y".equalsIgnoreCase(closemark);

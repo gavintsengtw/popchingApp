@@ -21,18 +21,20 @@ public class AssetController {
     private AssetService assetService; // Changed from AssetRepository
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public List<Asset> getAllAssets() {
         return assetService.getAllAssets(); // Delegated to service
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Asset> getAssetById(@PathVariable(value = "id") String assetId) {
         Asset asset = assetService.getAssetById(assetId); // Delegated to service
         return ResponseEntity.ok().body(asset);
     }
 
     @PostMapping(consumes = { "multipart/form-data" }) // Added consumes
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_ADD')")
     public ResponseEntity<Asset> createAsset(
             @RequestPart("asset") AssetRequest assetRequest, // Changed to @RequestPart
             @RequestPart(value = "files", required = false) MultipartFile[] files) { // Added files
@@ -42,7 +44,7 @@ public class AssetController {
     }
 
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" }) // Added consumes
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_EDIT')")
     public ResponseEntity<Asset> updateAsset(
             @PathVariable(value = "id") String assetId,
             @RequestPart("asset") AssetRequest assetRequest, // Changed to @RequestPart
@@ -53,7 +55,7 @@ public class AssetController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_DELETE')")
     public ResponseEntity<?> deleteAsset(@PathVariable(value = "id") String assetId) {
         assetService.deleteAsset(assetId); // Delegated to service
         return ResponseEntity.ok().build();

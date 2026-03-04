@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_sidebar.dart';
 
 class DesktopNavScaffold extends StatelessWidget {
   final Widget child;
@@ -16,28 +17,14 @@ class DesktopNavScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          NavigationRail(
-            selectedIndex: currentIndex,
-            onDestinationSelected: onNavigationChanged,
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard),
-                label: Text('儀表板'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.inventory_2_outlined),
-                selectedIcon: Icon(Icons.inventory_2),
-                label: Text('資產'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: Text('設定'),
-              ),
-            ],
+          SizedBox(
+            width: 250,
+            child: AppSidebar(
+              currentIndex: currentIndex,
+              onNavigationChanged: onNavigationChanged,
+            ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(child: child),

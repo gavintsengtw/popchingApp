@@ -12,13 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+import com.popching.cams.repository.UserGroupRepository;
+import com.popching.cams.entity.UserGroup;
+import java.util.List;
+
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final UserGroupRepository userGroupRepository;
+    private final com.popching.cams.repository.RoleRepository roleRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository, UserGroupRepository userGroupRepository,
+            com.popching.cams.repository.RoleRepository roleRepository) {
         this.userRepository = userRepository;
+        this.userGroupRepository = userGroupRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -29,10 +38,39 @@ public class CustomUserDetailsService implements UserDetailsService {
                         "User not found with username or email: " + usernameOrEmail));
 
         Set<GrantedAuthority> authorities = new java.util.HashSet<>();
-        if (user.getGrpadilities() != null && !user.getGrpadilities().isEmpty()) {
+
+        List<UserGroup> userGroups = userGroupRepository.findByUserId(user.getUsername());
+
+        for (UserGroup ug : userGroups) {
+            String roleName = ug.getGroupId().trim();
+            if (!roleName.toUpperCase().startsWith("ROLE_")) {
+                roleName = "ROLE_" + roleName.toUpperCase();
+            }
+            authorities.add(new SimpleGrantedAuthority(roleName));
+
+            // Fetch group_crud to check permissions
+            roleRepository.findByGroupId(ug.getGroupId()).ifPresent(role -> {
+                if ("Y".equalsIgnoreCase(role.getNewMark()) || "1".equals(role.getNewMark()))
+                    authorities.add(new SimpleGrantedAuthority("PERM_ADD"));
+                if ("Y".equalsIgnoreCase(role.getModMark()) || "1".equals(role.getModMark()))
+                    authorities.add(new SimpleGrantedAuthority("PERM_EDIT"));
+                if ("Y".equalsIgnoreCase(role.getDeleteMark()) || "1".equals(role.getDeleteMark()))
+                    authorities.add(new SimpleGrantedAuthority("PERM_DELETE"));
+                if ("Y".equalsIgnoreCase(role.getAdminMark()) || "1".equals(role.getAdminMark()))
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            });
+        }
+
+        // Only use legacy comma-separated string if the user has no defined groups in
+        // baccount_group
+        if (authorities.isEmpty() && user.getGrpadilities() != null && !user.getGrpadilities().trim().isEmpty()) {
             String[] roles = user.getGrpadilities().split(",");
             for (String role : roles) {
-                authorities.add(new SimpleGrantedAuthority(role.trim()));
+                String roleName = role.trim();
+                if (!roleName.toUpperCase().startsWith("ROLE_")) {
+                    roleName = "ROLE_" + roleName.toUpperCase();
+                }
+                authorities.add(new SimpleGrantedAuthority(roleName));
             }
         }
 

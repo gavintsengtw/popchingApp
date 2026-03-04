@@ -1,12 +1,9 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import '../../services/api_service.dart';
 import '../models/asset_model.dart';
 import '../pages/asset/asset_form_page.dart';
-import '../config/api_config.dart';
 import '../pages/scan/qr_scan_page.dart';
+import 'app_sidebar.dart';
 
 class MobileNavScaffold extends StatelessWidget {
   final Widget child;
@@ -36,21 +33,13 @@ class MobileNavScaffold extends StatelessWidget {
       );
 
       try {
-        const storage = FlutterSecureStorage();
-        final token = await storage.read(key: 'jwt_token');
-
-        final response = await http.get(
-          Uri.parse(ApiConfig.assetsUrl),
-          headers: {'Authorization': 'Bearer $token'},
-        );
+        final apiService = ApiService();
+        final response = await apiService.get('/assets');
 
         if (context.mounted) Navigator.pop(context); // Close loading
 
-        if (response.statusCode == 200) {
-          final List<dynamic> data = jsonDecode(
-            utf8.decode(response.bodyBytes),
-          );
-          final assets = data.map((e) => Asset.fromJson(e)).toList();
+        if (response != null && response is List) {
+          final assets = response.map((e) => Asset.fromJson(e)).toList();
 
           try {
             final asset = assets.firstWhere((a) => a.assetCode == scannedCode);
@@ -84,32 +73,20 @@ class MobileNavScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: child,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _handleScan(context),
-        child: const Icon(Icons.qr_code_scanner),
+      appBar: AppBar(title: const Text('CAMS 資產管理系統'), elevation: 1),
+      drawer: Drawer(
+        child: AppSidebar(
+          currentIndex: currentIndex,
+          onNavigationChanged: onNavigationChanged,
+        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: onNavigationChanged,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: '儀表板',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: '資產',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: '設定',
-          ),
-        ],
+      body: Scaffold(
+        body: child,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _handleScan(context),
+          child: const Icon(Icons.qr_code_scanner),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }
