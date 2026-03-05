@@ -74,4 +74,14 @@ public class FileStorageService {
             throw new MyFileNotFoundException("File not found " + fileName, ex);
         }
     }
+
+    public boolean deleteFile(String fileName) {
+        try {
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            return Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            // Log error or throw exception based on failure policy
+            return false;
+        }
+    }
 }

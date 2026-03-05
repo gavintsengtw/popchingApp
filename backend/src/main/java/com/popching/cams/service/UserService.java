@@ -54,6 +54,10 @@ public class UserService {
         return userRepository.findById(id).map(this::populateRoles);
     }
 
+    public Optional<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username).map(this::populateRoles);
+    }
+
     public User createUser(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -62,6 +66,7 @@ public class UserService {
         if (user.getClosemark() == null) {
             user.setClosemark("N");
         }
+        user.setIsDefaultPassword(1); // Set default password flag for new users
         User savedUser = userRepository.save(user);
 
         if (user.getRoleIds() != null) {
@@ -114,6 +119,26 @@ public class UserService {
         }
 
         return populateRoles(updatedUser);
+    }
+
+    public User updateProfile(String username, User userDetails) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setEmail(userDetails.getEmail());
+        user.setCellphone(userDetails.getCellphone());
+        user.setAgent(userDetails.getAgent());
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
+        return populateRoles(userRepository.save(user));
+    }
+
+    public void resetPassword(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPassword(passwordEncoder.encode("123456"));
+        user.setIsDefaultPassword(1);
+        userRepository.save(user);
     }
 
     public void deleteUser(String id) {

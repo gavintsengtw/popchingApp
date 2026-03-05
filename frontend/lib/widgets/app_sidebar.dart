@@ -149,6 +149,16 @@ class AppSidebar extends StatelessWidget {
             }),
             const Divider(),
             ListTile(
+              leading: const Icon(Icons.person, color: Colors.blue),
+              title: const Text('個人資料 (My Profile)'),
+              onTap: () {
+                if (Scaffold.of(context).isDrawerOpen) {
+                  Navigator.pop(context); // Close mobile drawer
+                }
+                Navigator.of(context).pushNamed('/profile');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
                 '登出 (Logout)',

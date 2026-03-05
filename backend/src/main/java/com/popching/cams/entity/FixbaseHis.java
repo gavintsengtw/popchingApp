@@ -10,16 +10,16 @@ import java.time.LocalDate;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "FIXBASE")
+@Table(name = "FIXBASE_HIS")
 @AttributeOverrides({
         @AttributeOverride(name = "createdAt", column = @Column(name = "CRDTE")),
         @AttributeOverride(name = "updatedAt", column = @Column(name = "MODDTE"))
 })
-public class Asset extends BaseEntity {
+public class FixbaseHis extends BaseEntity {
 
     @Id
     @Column(name = "SYSNUM", length = 50)
-    private String id;
+    private String id; // Use a new UUID for the history record SYSNUM
 
     @Column(name = "F02_MAINCLASS")
     private String mainClass;
@@ -34,7 +34,7 @@ public class Asset extends BaseEntity {
     private String batch;
 
     @Column(name = "F02_NO")
-    private String assetCode;
+    private String assetCode; // Original Asset ID
 
     @Column(name = "F02_BRAND")
     private String brand;
@@ -70,7 +70,7 @@ public class Asset extends BaseEntity {
     private LocalDate purchaseDate;
 
     @Column(name = "F02_OYY")
-    private String usefulLife; // Year limit
+    private String usefulLife;
 
     @Column(name = "F02_ODATE")
     private LocalDate warrantyDate;
@@ -79,16 +79,16 @@ public class Asset extends BaseEntity {
     private String pcName;
 
     @Column(name = "F02_FILE", length = 4000)
-    private String fileDescription; // description
+    private String fileDescription;
 
     @Column(name = "F02_MARK", length = 4000)
     private String remark;
 
     @Column(name = "F02_PHOTONAME")
-    private String photoName; // Main photo?
+    private String photoName;
 
     @Column(name = "F02_USETYPE")
-    private String status; // U = In Use?
+    private String status;
 
     @Column(name = "F02_LEASEDEPT")
     private String leaseDept;
@@ -97,8 +97,7 @@ public class Asset extends BaseEntity {
     private String size;
 
     @Column(name = "CRUSER")
-    private String createdBy; // Overlap with auditing? BaseEntity might handle date, but User? BaseEntity
-                              // doesn't have createdBy.
+    private String createdBy;
 
     @Column(name = "MODUSER")
     private String lastModifiedBy;
@@ -113,21 +112,9 @@ public class Asset extends BaseEntity {
     private String regionId;
 
     @Column(name = "RAGICSH", length = 50)
-    private String ragicSh; // WarehouseCode from WarehouseManagement
+    private String ragicSh;
 
     @Column(name = "RAGICID", length = 50)
-    private String ragicId; // RAGIC Asset ID
+    private String ragicId;
 
-    @Transient
-    private String custodianName;
-
-    @Transient
-    private String departmentName;
-
-    @Transient
-    private String locationName;
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "F02_NO", referencedColumnName = "F02_NO")
-    private java.util.List<FixUploadFile> images;
 }

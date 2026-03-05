@@ -35,7 +35,11 @@ class _LoginPageState extends State<LoginPage> {
 
       if (success) {
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
+          if (authProvider.isDefaultPassword) {
+            Navigator.pushReplacementNamed(context, '/change-password');
+          } else {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         }
       } else {
         setState(() {

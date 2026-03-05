@@ -7,7 +7,9 @@ class AuthProvider with ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   bool _isAuthenticated = false;
+  bool _isDefaultPassword = false;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isDefaultPassword => _isDefaultPassword;
 
   bool _canAdd = false;
   bool _canEdit = false;
@@ -54,6 +56,7 @@ class AuthProvider with ChangeNotifier {
       if (response != null && response['accessToken'] != null) {
         await _storage.write(key: 'jwt_token', value: response['accessToken']);
         _isAuthenticated = true;
+        _isDefaultPassword = response['isDefaultPassword'] == 1;
         await _fetchPermissions();
         notifyListeners();
         return true;

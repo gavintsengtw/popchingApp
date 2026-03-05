@@ -20,6 +20,12 @@ class Asset {
   final String? status;
   final String? remark;
   final String? fileDescription;
+  final String? classType;
+  final String? regionId;
+  final String? color;
+  final String? custodianName;
+  final String? departmentName;
+  final String? locationName;
   final List<AssetImage> images;
 
   Asset({
@@ -44,6 +50,12 @@ class Asset {
     this.status,
     this.remark,
     this.fileDescription,
+    this.classType,
+    this.regionId,
+    this.color,
+    this.custodianName,
+    this.departmentName,
+    this.locationName,
     this.images = const [],
   });
 
@@ -80,6 +92,12 @@ class Asset {
       status: json['status'],
       remark: json['remark'],
       fileDescription: json['fileDescription'],
+      classType: json['classType'],
+      regionId: json['regionId'],
+      color: json['color'],
+      custodianName: json['custodianName'],
+      departmentName: json['departmentName'],
+      locationName: json['locationName'],
       images:
           (json['images'] as List<dynamic>?)
               ?.map((e) => AssetImage.fromJson(e))
@@ -111,6 +129,12 @@ class Asset {
       'status': status,
       'remark': remark,
       'fileDescription': fileDescription,
+      'classType': classType,
+      'regionId': regionId,
+      'color': color,
+      'custodianName': custodianName,
+      'departmentName': departmentName,
+      'locationName': locationName,
     };
   }
 }

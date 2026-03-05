@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface AssetRepository extends JpaRepository<Asset, String>, JpaSpecificationExecutor<Asset> {
     List<Asset> findByAssetCode(String assetCode);
+
+    List<Asset> findByYearAndBatch(String year, String batch);
 }

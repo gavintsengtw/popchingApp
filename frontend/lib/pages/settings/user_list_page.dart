@@ -361,6 +361,51 @@ class _UserListPageState extends State<UserListPage> {
     }
   }
 
+  Future<void> _resetPassword(Map<String, dynamic> user) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('重設密碼 (Reset Password)'),
+        content: Text('確定要將使用者 ${user['fullName']} 的密碼重設為預設密碼 123456 嗎？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消 (Cancel)'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              '確定重設 (Confirm)',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _apiService.post(
+          '/users/${Uri.encodeComponent(user['id'])}/reset-password',
+          {},
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('密碼已成功重設為預設值。')));
+          _fetchUsers(); // Optional: refresh if we want to show updated state, but no state is visible changed here except backend.
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('重設密碼失敗：$e')));
+        }
+      }
+    }
+  }
+
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -546,13 +591,28 @@ class _UserListPageState extends State<UserListPage> {
                               ),
                               if (authProvider.canEdit)
                                 DataCell(
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      size: 20,
-                                      color: Colors.blue,
-                                    ),
-                                    onPressed: () => _showUserDialog(user),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          size: 20,
+                                          color: Colors.blue,
+                                        ),
+                                        tooltip: '編輯 (Edit)',
+                                        onPressed: () => _showUserDialog(user),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.lock_reset,
+                                          size: 20,
+                                          color: Colors.orange,
+                                        ),
+                                        tooltip: '重設密碼 (Reset Password)',
+                                        onPressed: () => _resetPassword(user),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],

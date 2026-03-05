@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'change_password_page.dart';
+import 'pages/settings/user_profile_page.dart';
 import 'login_page.dart';
 import 'widgets/responsive_shell.dart';
 import 'pages/asset/asset_list_page.dart';
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const MainScreen(),
         '/login': (context) => const LoginPage(),
+        '/profile': (context) => const UserProfilePage(),
         '/change-password': (context) => const ChangePasswordPage(),
       },
     );
@@ -97,6 +99,8 @@ class _MainScreenState extends State<MainScreen> {
         return const FloorPage();
       case 'fc001-004':
         return const RegionPage();
+      case 'fc002-001':
+        return const AssetListPage();
       case 'fc003-001':
         return const RoleListPage();
       case 'fc003-002':

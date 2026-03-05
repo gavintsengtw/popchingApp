@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import '../../models/asset_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-
 import 'asset_form_page.dart';
-import '../../config/api_config.dart';
-
 import '../../services/api_service.dart';
+
+class DropdownItem {
+  final String value;
+  final String label;
+  DropdownItem({required this.value, required this.label});
+}
 
 class AssetListPage extends StatefulWidget {
   const AssetListPage({super.key});
@@ -17,16 +20,128 @@ class AssetListPage extends StatefulWidget {
 
 class _AssetListPageState extends State<AssetListPage> {
   final ApiService _apiService = ApiService();
+
+  // Search state
+  String? _mainClass;
+  String? _midClass;
+  String? _year;
+  String? _custodian;
+  String? _location;
+  final TextEditingController _keywordController = TextEditingController();
+
+  // Pagination state
+  int _currentPage = 0;
+  int _pageSize = 10;
+  int _totalRecords = 0;
+  bool _isLoading = false;
+
   List<Asset> _assets = [];
-  List<Asset> _filteredAssets = [];
-  bool _isLoading = true;
-  final TextEditingController _searchController = TextEditingController();
+
+  // Dropdown options (mocked or loaded from API in real scenario)
+  List<DropdownItem> _mainClasses = []; // 設備大類
+  List<DropdownItem> _midClasses = []; // 設備中類
+  final List<DropdownItem> _years = List.generate(
+    20,
+    (index) => DropdownItem(
+      value: (100 + index).toString(),
+      label: (100 + index).toString(),
+    ),
+  ); // 選擇民國年
+  List<DropdownItem> _custodians = [];
+  List<DropdownItem> _locations = [];
 
   @override
   void initState() {
     super.initState();
+    _fetchMainClasses();
+    _fetchMidClasses();
+    _fetchCustodians();
+    _fetchLocations();
     _fetchAssets();
-    _searchController.addListener(_filterAssets);
+  }
+
+  Future<void> _fetchMainClasses() async {
+    try {
+      final response = await _apiService.get('/dictionary/code/MAINCLASS');
+      if (response != null && response is List) {
+        setState(() {
+          _mainClasses = response
+              .map<DropdownItem>(
+                (item) => DropdownItem(
+                  value: item['itemId']?.toString() ?? '',
+                  label: item['itemName']?.toString() ?? '',
+                ),
+              )
+              .where((item) => item.label.isNotEmpty && item.value.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching main classes: $e');
+    }
+  }
+
+  Future<void> _fetchMidClasses() async {
+    try {
+      final response = await _apiService.get('/dictionary/code/MIDCLASS');
+      if (response != null && response is List) {
+        setState(() {
+          _midClasses = response
+              .map<DropdownItem>(
+                (item) => DropdownItem(
+                  value: item['itemId']?.toString() ?? '',
+                  label: item['itemName']?.toString() ?? '',
+                ),
+              )
+              .where((item) => item.label.isNotEmpty && item.value.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching mid classes: $e');
+    }
+  }
+
+  Future<void> _fetchCustodians() async {
+    try {
+      final response = await _apiService.get('/users');
+      if (response != null && response is List) {
+        setState(() {
+          _custodians = response
+              .map<DropdownItem>(
+                (user) => DropdownItem(
+                  value: user['username']?.toString() ?? '',
+                  label: user['fullName']?.toString() ?? '',
+                ),
+              )
+              .where((item) => item.label.isNotEmpty && item.value.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching custodians: $e');
+    }
+  }
+
+  Future<void> _fetchLocations() async {
+    try {
+      final response = await _apiService.get('/dictionary/code/FLOOR');
+      if (response != null && response is List) {
+        setState(() {
+          _locations = response
+              .map<DropdownItem>(
+                (item) => DropdownItem(
+                  value: item['itemId']?.toString() ?? '',
+                  label: item['itemName']?.toString() ?? '',
+                ),
+              )
+              .where((item) => item.label.isNotEmpty && item.value.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching locations: $e');
+    }
   }
 
   Future<void> _fetchAssets() async {
@@ -35,28 +150,41 @@ class _AssetListPageState extends State<AssetListPage> {
     });
 
     try {
-      final response = await _apiService.get('/assets');
+      // Build query parameters
+      final Map<String, dynamic> queryParams = {
+        'page': _currentPage.toString(),
+        'size': _pageSize.toString(),
+      };
 
-      if (response != null && response is List) {
+      if (_mainClass != null && _mainClass!.isNotEmpty)
+        queryParams['mainClass'] = _mainClass;
+      if (_midClass != null && _midClass!.isNotEmpty)
+        queryParams['midClass'] = _midClass;
+      if (_year != null && _year!.isNotEmpty) queryParams['year'] = _year;
+      if (_custodian != null && _custodian!.isNotEmpty)
+        queryParams['custodian'] = _custodian;
+      if (_location != null && _location!.isNotEmpty)
+        queryParams['location'] = _location;
+      if (_keywordController.text.isNotEmpty)
+        queryParams['keyword'] = _keywordController.text;
+
+      // Construct query string
+      final queryString = Uri(queryParameters: queryParams).query;
+      final response = await _apiService.get('/assets?$queryString');
+
+      if (response != null && response is Map<String, dynamic>) {
+        final content = response['content'] as List<dynamic>? ?? [];
         setState(() {
-          _assets = response.map((e) => Asset.fromJson(e)).toList();
-          _filteredAssets = _assets;
+          _assets = content.map((e) => Asset.fromJson(e)).toList();
+          _totalRecords = response['totalElements'] ?? 0;
         });
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to load assets: Invalid response format'),
-            ),
-          );
-        }
+        _showError(
+          '無法載入資料: 回傳格式錯誤/Failed to load assets: Invalid response format',
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
+      _showError('發生錯誤/Error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -66,15 +194,25 @@ class _AssetListPageState extends State<AssetListPage> {
     }
   }
 
-  void _filterAssets() {
-    final query = _searchController.text.toLowerCase();
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  void _resetSearch() {
     setState(() {
-      _filteredAssets = _assets.where((asset) {
-        return asset.name.toLowerCase().contains(query) ||
-            asset.assetCode.toLowerCase().contains(query) ||
-            (asset.custodian?.toLowerCase().contains(query) ?? false);
-      }).toList();
+      _mainClass = null;
+      _midClass = null;
+      _year = null;
+      _custodian = null;
+      _location = null;
+      _keywordController.clear();
+      _currentPage = 0;
     });
+    _fetchAssets();
   }
 
   Future<void> _navigateToForm([Asset? asset]) async {
@@ -88,19 +226,168 @@ class _AssetListPageState extends State<AssetListPage> {
     }
   }
 
-  Future<void> _deleteAsset(String id) async {
-    try {
-      await _apiService.delete('/assets/$id');
+  Future<void> _voidAsset(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('確認作廢 (Confirm Void)'),
+        content: const Text(
+          '確定要作廢此筆資產嗎？/Are you sure you want to void this asset?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消 (Cancel)'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              '作廢 (Void)',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
 
-      // Assuming successful delete returns some response or null if empty
+    if (confirm != true) return;
+
+    try {
+      await _apiService.delete('/assets/$id'); // In backend this now voids
       _fetchAssets();
-    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('作廢成功 (Voided Successfully)')),
+        );
       }
+    } catch (e) {
+      _showError('發生錯誤/Error: $e');
     }
+  }
+
+  Widget _buildSearchPanel() {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '查詢條件',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.start,
+              children: [
+                _buildDropdown(
+                  '設備大類',
+                  _mainClass,
+                  _mainClasses,
+                  (val) => setState(() => _mainClass = val),
+                ),
+                _buildDropdown(
+                  '設備中類',
+                  _midClass,
+                  _midClasses,
+                  (val) => setState(() => _midClass = val),
+                ),
+                _buildDropdown(
+                  '購買年度(民國年)',
+                  _year,
+                  _years,
+                  (val) => setState(() => _year = val),
+                ),
+                _buildDropdown(
+                  '保管人',
+                  _custodian,
+                  _custodians,
+                  (val) => setState(() => _custodian = val),
+                ),
+                _buildDropdown(
+                  '存放位置',
+                  _location,
+                  _locations,
+                  (val) => setState(() => _location = val),
+                ),
+                SizedBox(
+                  width: 300,
+                  child: TextField(
+                    controller: _keywordController,
+                    decoration: const InputDecoration(
+                      labelText: '全文檢索 (名稱, 型號, 編號)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onSubmitted: (_) {
+                      _currentPage = 0;
+                      _fetchAssets();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _resetSearch,
+                  icon: const Icon(Icons.clear),
+                  label: const Text('清除條件'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _currentPage = 0;
+                    });
+                    _fetchAssets();
+                  },
+                  icon: const Icon(Icons.search),
+                  label: const Text('查詢'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(
+    String label,
+    String? value,
+    List<DropdownItem> items,
+    ValueChanged<String?> onChanged,
+  ) {
+    // 檢查目前選取的值是否存在於 items 中，避免 value 不存在導致 error
+    bool valueExists = items.any((item) => item.value == value);
+    String? safeValue = valueExists ? value : null;
+
+    return SizedBox(
+      width: 200,
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        value: safeValue,
+        items: [
+          const DropdownMenuItem<String>(value: null, child: Text('全部')),
+          ...items.map(
+            (e) =>
+                DropdownMenuItem<String>(value: e.value, child: Text(e.label)),
+          ),
+        ],
+        onChanged: onChanged,
+      ),
+    );
   }
 
   @override
@@ -109,86 +396,188 @@ class _AssetListPageState extends State<AssetListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('資產列表'),
+        title: const Text('設備清單'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchAssets),
-          if (authProvider.canAdd)
-            IconButton(
-              icon: const Icon(Icons.add),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('新增設備', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
               onPressed: () => _navigateToForm(),
             ),
+          ),
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: '搜尋 (名稱, 編號, 保管人)',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
+          _buildSearchPanel(),
           Expanded(
-            child: _isLoading
+            child: _isLoading && _assets.isEmpty
                 ? const Center(child: CircularProgressIndicator())
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      return GridView.builder(
-                        padding: const EdgeInsets.all(8),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: constraints.maxWidth > 800 ? 3 : 1,
-                          childAspectRatio: 3, // Wide cards
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        itemCount: _filteredAssets.length,
-                        itemBuilder: (context, index) {
-                          final asset = _filteredAssets[index];
-                          return Card(
-                            elevation: 2,
-                            child: ListTile(
-                              leading: asset.images.isNotEmpty
-                                  ? Image.network(
-                                      ApiConfig.resolveImageUrl(
-                                        asset.images.first.url,
-                                      ),
-                                      width: 50,
-                                      height: 50,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(Icons.image),
-                                    )
-                                  : const Icon(Icons.inventory_2, size: 40),
-                              title: Text(asset.name),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('編號: ${asset.assetCode}'),
-                                  Text('保管人: ${asset.custodian ?? "無"}'),
+                : Card(
+                    margin: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Data Table container
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                headingRowColor: MaterialStateProperty.all(
+                                  Colors.grey.shade200,
+                                ),
+                                columns: const [
+                                  DataColumn(label: Text('動作 (Action)')),
+                                  DataColumn(label: Text('資產編號')),
+                                  DataColumn(label: Text('名稱')),
+                                  DataColumn(label: Text('購買日期')),
+                                  DataColumn(label: Text('型號/規格')),
+                                  DataColumn(label: Text('數量')),
+                                  DataColumn(label: Text('保管人/部門')),
+                                  DataColumn(label: Text('存放位置')),
                                 ],
-                              ),
-                              onTap: authProvider.canEdit
-                                  ? () => _navigateToForm(asset)
-                                  : null,
-                              trailing: authProvider.canDelete
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
+                                rows: _assets
+                                    .map(
+                                      (asset) => DataRow(
+                                        cells: [
+                                          DataCell(
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (authProvider.canEdit)
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      color: Colors.blue,
+                                                      size: 20,
+                                                    ),
+                                                    onPressed: () =>
+                                                        _navigateToForm(asset),
+                                                    tooltip: '編輯',
+                                                  ),
+                                                if (authProvider.canDelete)
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.block,
+                                                      color: Colors.red,
+                                                      size: 20,
+                                                    ),
+                                                    onPressed: () =>
+                                                        _voidAsset(asset.id),
+                                                    tooltip: '作廢',
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          DataCell(Text(asset.assetCode)),
+                                          DataCell(Text(asset.name)),
+                                          DataCell(
+                                            Text(
+                                              asset.purchaseDate != null
+                                                  ? "${asset.purchaseDate!.year}-${asset.purchaseDate!.month.toString().padLeft(2, '0')}-${asset.purchaseDate!.day.toString().padLeft(2, '0')}"
+                                                  : '',
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              '${asset.brand ?? ""} / ${asset.specification ?? ""}',
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              asset.quantity?.toString() ?? '',
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              '${asset.custodianName ?? asset.custodian ?? ""} / ${asset.departmentName ?? asset.userDept ?? ""}',
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              asset.locationName ??
+                                                  asset.location ??
+                                                  '',
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      onPressed: () => _deleteAsset(asset.id),
                                     )
-                                  : null,
+                                    .toList(),
+                              ),
                             ),
-                          );
-                        },
-                      );
-                    },
+                          ),
+                        ),
+                        // Pagination Controls
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text('共 $_totalRecords 筆資料'),
+                              const SizedBox(width: 16),
+                              const Text('每頁顯示:'),
+                              const SizedBox(width: 8),
+                              DropdownButton<int>(
+                                value: _pageSize,
+                                items: [10, 20, 50, 100].map((size) {
+                                  return DropdownMenuItem<int>(
+                                    value: size,
+                                    child: Text(size.toString()),
+                                  );
+                                }).toList(),
+                                onChanged: (int? newSize) {
+                                  if (newSize != null) {
+                                    setState(() {
+                                      _pageSize = newSize;
+                                      _currentPage = 0;
+                                    });
+                                    _fetchAssets();
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left),
+                                onPressed: _currentPage > 0
+                                    ? () {
+                                        setState(() {
+                                          _currentPage--;
+                                        });
+                                        _fetchAssets();
+                                      }
+                                    : null,
+                              ),
+                              Text('第 ${_currentPage + 1} 頁'),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right),
+                                onPressed:
+                                    (_currentPage + 1) * _pageSize <
+                                        _totalRecords
+                                    ? () {
+                                        setState(() {
+                                          _currentPage++;
+                                        });
+                                        _fetchAssets();
+                                      }
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
           ),
         ],

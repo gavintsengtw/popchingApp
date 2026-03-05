@@ -5,25 +5,42 @@ import com.popching.cams.payload.AssetRequest;
 import com.popching.cams.service.AssetService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/assets")
 public class AssetController {
 
     @Autowired
-    private AssetService assetService; // Changed from AssetRepository
+    private AssetService assetService;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<Asset> getAllAssets() {
-        return assetService.getAllAssets(); // Delegated to service
+    public Page<Asset> searchAssets(
+            @RequestParam(required = false) String mainClass,
+            @RequestParam(required = false) String midClass,
+            @RequestParam(required = false) String year,
+            @RequestParam(required = false) String custodian,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return assetService.searchAssets(mainClass, midClass, year, custodian, location, keyword, pageable);
     }
 
     @GetMapping("/{id}")
@@ -56,8 +73,8 @@ public class AssetController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_DELETE')")
-    public ResponseEntity<?> deleteAsset(@PathVariable(value = "id") String assetId) {
-        assetService.deleteAsset(assetId); // Delegated to service
+    public ResponseEntity<?> voidAsset(@PathVariable(value = "id") String assetId) {
+        assetService.voidAsset(assetId); // Voiding rather than deleting
         return ResponseEntity.ok().build();
     }
 }

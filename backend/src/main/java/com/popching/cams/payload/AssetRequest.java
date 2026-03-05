@@ -3,6 +3,7 @@ package com.popching.cams.payload;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class AssetRequest {
@@ -20,10 +21,10 @@ public class AssetRequest {
     private String midClass;
     private String year;
     private String batch;
-
     private BigDecimal quantity;
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
+    private String color; // F02_CR 單位
 
     private String userDept;
     private String custodian;
@@ -36,6 +37,11 @@ public class AssetRequest {
     private String status; // F02_USETYPE
     private String remark;
     private String fileDescription;
+
+    private String ragicSh;
+    private String ragicId;
+
+    private List<String> deletedImageIds; // 前端送來要刪除的已存在圖片ID
 
     // For relations, we now pass Strings directly as per legacy schema
 }

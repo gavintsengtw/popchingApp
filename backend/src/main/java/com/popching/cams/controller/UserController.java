@@ -38,6 +38,22 @@ public class UserController {
         return ResponseEntity.ok().body(user);
     }
 
+    @GetMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<User> getMyProfile(org.springframework.security.core.Authentication authentication) {
+        User user = userService.getUserByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<User> updateMyProfile(org.springframework.security.core.Authentication authentication,
+            @RequestBody User userDetails) {
+        User updatedUser = userService.updateProfile(authentication.getName(), userDetails);
+        return ResponseEntity.ok(updatedUser);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_ADD')")
     public User createUser(@RequestBody User user) {
@@ -51,6 +67,13 @@ public class UserController {
             @RequestBody User userDetails) {
         User updatedUser = userService.updateUser(id, userDetails);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_EDIT')")
+    public ResponseEntity<?> resetPassword(@PathVariable String id) {
+        userService.resetPassword(id);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

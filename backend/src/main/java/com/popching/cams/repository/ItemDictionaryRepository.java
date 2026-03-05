@@ -15,4 +15,6 @@ public interface ItemDictionaryRepository extends JpaRepository<ItemDictionary, 
 
     @Query("SELECT i FROM ItemDictionary i WHERE i.codeId = :codeId AND (i.deleteMark IS NULL OR i.deleteMark != 'Y')")
     List<ItemDictionary> findActiveByCodeId(@Param("codeId") String codeId);
+
+    List<ItemDictionary> findByCodeIdAndItemIdIn(String codeId, List<String> itemIds);
 }
