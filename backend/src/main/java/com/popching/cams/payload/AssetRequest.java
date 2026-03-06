@@ -38,6 +38,9 @@ public class AssetRequest {
     private String remark;
     private String fileDescription;
 
+    private String classType;
+    private String regionId;
+
     private String ragicSh;
     private String ragicId;
 

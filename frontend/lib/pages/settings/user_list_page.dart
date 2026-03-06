@@ -429,7 +429,7 @@ class _UserListPageState extends State<UserListPage> {
               labelText: '部門 (Department)',
               border: OutlineInputBorder(),
             ),
-            value: _selectedSearchDeptId,
+            initialValue: _selectedSearchDeptId,
             items: [
               const DropdownMenuItem<String>(
                 value: null,
@@ -454,7 +454,7 @@ class _UserListPageState extends State<UserListPage> {
               labelText: '群組 (Group)',
               border: OutlineInputBorder(),
             ),
-            value: _selectedSearchGroupId,
+            initialValue: _selectedSearchGroupId,
             items: [
               const DropdownMenuItem<String>(
                 value: null,
@@ -548,7 +548,7 @@ class _UserListPageState extends State<UserListPage> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.only(bottom: 80.0),
                       child: DataTable(
-                        headingRowColor: MaterialStateProperty.resolveWith(
+                        headingRowColor: WidgetStateProperty.resolveWith(
                           (states) => Colors.grey[200],
                         ),
                         columns: [

@@ -491,7 +491,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
         "specification": "${_specController.text}",
         "batch": "${_batchController.text}",
         "unitPrice": ${_unitPriceController.text.isNotEmpty ? double.tryParse(_unitPriceController.text) : null},
-        "unit": "${_unitController.text}",
+        "color": "${_unitController.text}",
         "purchaseDate": ${_purchaseDateController.text.isNotEmpty ? '"${_purchaseDateController.text}T00:00:00Z"' : 'null'},
         "warrantyDate": ${_warrantyDateController.text.isNotEmpty ? '"${_warrantyDateController.text}T00:00:00Z"' : 'null'},
         "deletedImageIds": ${_deletedImageIds.isNotEmpty ? json.encode(_deletedImageIds) : 'null'},
@@ -871,7 +871,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                       // 2. 渲染新選取但未上傳的圖片
                       ..._selectedImages.asMap().entries.map((entry) {
                         int index = entry.key;
@@ -911,7 +911,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

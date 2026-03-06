@@ -77,4 +77,20 @@ public class AssetController {
         assetService.voidAsset(assetId); // Voiding rather than deleting
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/batch/custodian")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_EDIT')")
+    public ResponseEntity<?> batchUpdateCustodian(
+            @RequestBody com.popching.cams.payload.AssetBatchUpdateRequest request) {
+        assetService.batchUpdateCustodian(request.getAssetIds(), request.getNewValue());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/batch/location")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_EDIT')")
+    public ResponseEntity<?> batchUpdateLocation(
+            @RequestBody com.popching.cams.payload.AssetBatchUpdateRequest request) {
+        assetService.batchUpdateLocation(request.getAssetIds(), request.getNewValue());
+        return ResponseEntity.ok().build();
+    }
 }

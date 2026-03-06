@@ -253,7 +253,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 labelText: '代理人 (Agent)',
                                 border: OutlineInputBorder(),
                               ),
-                              value: _selectedAgentId,
+                              initialValue: _selectedAgentId,
                               items: [
                                 const DropdownMenuItem<String>(
                                   value: null,

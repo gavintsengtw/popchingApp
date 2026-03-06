@@ -62,6 +62,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  bool _isInitialLoad = true;
 
   @override
   void initState() {
@@ -148,6 +149,18 @@ class _MainScreenState extends State<MainScreen> {
         // Validate index is in bounds (in case functions change after reload)
         if (_selectedIndex >= functions.length) {
           _selectedIndex = 0;
+        }
+
+        // Set default page to Asset List on initial load
+        if (_isInitialLoad && functions.isNotEmpty) {
+          int defaultIndex = functions.indexWhere(
+            (f) => f['funcId'] == 'fc002-001' || f['funcId'] == 'ASSET_MGMT',
+          );
+          if (defaultIndex != -1) {
+            // Use Future.microtask or just update local var for this build frame
+            _selectedIndex = defaultIndex;
+          }
+          _isInitialLoad = false;
         }
 
         // Determine the actual widget to show

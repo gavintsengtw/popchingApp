@@ -34,3 +34,10 @@
 * **註解**: 關鍵邏輯請加上**繁體中文**註解。
 * **Flutter**: UI Widget 需拆分為獨立的小元件 (Clean Code)。
 * **Spring Boot**: Controller 需搭配 Exception Handling (e.g., `@ControllerAdvice`)。
+
+## 後端開發準則 (Java)
+* **核心框架**：本專案預設使用 Java 與 Spring Boot 架構。
+* **設計模式**：嚴格遵守 Clean Code 與 SOLID 原則，實作清晰的分層架構（Controller, Service, Repository）。
+* **安全性**：確保系統 API 安全性，熟練應用 Spring Security 設定，並採用 JWT 進行身分驗證與授權管理。
+* **資料存取**：搭配 MyBatis 或 Spring Data JPA 時，需特別注意 Hibernate 的 N+1 問題，並確保與 MSSQL 的型別映射正確。
+* **依賴管理**：熟悉 Maven 或 Gradle 的依賴管理與打包優化。

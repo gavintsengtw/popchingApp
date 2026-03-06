@@ -117,4 +117,13 @@ public class FixbaseHis extends BaseEntity {
     @Column(name = "RAGICID", length = 50)
     private String ragicId;
 
+    @Column(name = "CHANGETYPE", length = 50)
+    private String changeType;
+
+    @Column(name = "CHANGEDTE")
+    private java.time.LocalDateTime changeDte;
+
+    @Column(name = "CHANGEUSER", length = 50)
+    private String changeUser;
+
 }

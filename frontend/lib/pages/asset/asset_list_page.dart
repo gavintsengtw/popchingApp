@@ -36,6 +36,7 @@ class _AssetListPageState extends State<AssetListPage> {
   bool _isLoading = false;
 
   List<Asset> _assets = [];
+  final Set<String> _selectedAssetIds = {};
 
   // Dropdown options (mocked or loaded from API in real scenario)
   List<DropdownItem> _mainClasses = []; // 設備大類
@@ -156,17 +157,27 @@ class _AssetListPageState extends State<AssetListPage> {
         'size': _pageSize.toString(),
       };
 
-      if (_mainClass != null && _mainClass!.isNotEmpty)
+      if (_mainClass != null && _mainClass!.isNotEmpty) {
         queryParams['mainClass'] = _mainClass;
-      if (_midClass != null && _midClass!.isNotEmpty)
+      }
+      if (_midClass != null && _midClass!.isNotEmpty) {
         queryParams['midClass'] = _midClass;
-      if (_year != null && _year!.isNotEmpty) queryParams['year'] = _year;
-      if (_custodian != null && _custodian!.isNotEmpty)
+      }
+      if (_year != null && _year!.isNotEmpty) {
+        queryParams['year'] = _year;
+      }
+      if (_custodian != null && _custodian!.isNotEmpty) {
         queryParams['custodian'] = _custodian;
-      if (_location != null && _location!.isNotEmpty)
+      }
+      if (_location != null && _location!.isNotEmpty) {
         queryParams['location'] = _location;
-      if (_keywordController.text.isNotEmpty)
+      }
+      if (_keywordController.text.isNotEmpty) {
         queryParams['keyword'] = _keywordController.text;
+      }
+
+      // Add a timestamp to bypass browser caching which is common in Flutter Web
+      queryParams['t'] = DateTime.now().millisecondsSinceEpoch.toString();
 
       // Construct query string
       final queryString = Uri(queryParameters: queryParams).query;
@@ -177,6 +188,8 @@ class _AssetListPageState extends State<AssetListPage> {
         setState(() {
           _assets = content.map((e) => Asset.fromJson(e)).toList();
           _totalRecords = response['totalElements'] ?? 0;
+          _selectedAssetIds
+              .clear(); // Clear selections when fetching new page or search
         });
       } else {
         _showError(
@@ -263,6 +276,158 @@ class _AssetListPageState extends State<AssetListPage> {
       }
     } catch (e) {
       _showError('發生錯誤/Error: $e');
+    }
+  }
+
+  Future<void> _showBatchCustodianDialog() async {
+    if (_selectedAssetIds.isEmpty) return;
+
+    String? selectedCustodian;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('批次變更保管人'),
+          content: StatefulBuilder(
+            builder: (context, setStateSB) {
+              return DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: '選擇新保管人',
+                  border: OutlineInputBorder(),
+                ),
+                initialValue: selectedCustodian,
+                items: _custodians
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e.value,
+                        child: Text(e.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) {
+                  setStateSB(() {
+                    selectedCustodian = val;
+                  });
+                },
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedCustodian != null) {
+                  Navigator.pop(context, true);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('請選擇保管人')));
+                }
+              },
+              child: const Text('確認'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true && selectedCustodian != null) {
+      try {
+        setState(() => _isLoading = true);
+        await _apiService.put('/assets/batch/custodian', {
+          'assetIds': _selectedAssetIds.toList(),
+          'newValue': selectedCustodian,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('批次變更保管人成功')));
+        }
+        _fetchAssets();
+      } catch (e) {
+        _showError('發生錯誤: $e');
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _showBatchLocationDialog() async {
+    if (_selectedAssetIds.isEmpty) return;
+
+    String? selectedLocation;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('批次變更存放位置'),
+          content: StatefulBuilder(
+            builder: (context, setStateSB) {
+              return DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: '選擇新存放位置',
+                  border: OutlineInputBorder(),
+                ),
+                initialValue: selectedLocation,
+                items: _locations
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e.value,
+                        child: Text(e.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) {
+                  setStateSB(() {
+                    selectedLocation = val;
+                  });
+                },
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedLocation != null) {
+                  Navigator.pop(context, true);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('請選擇存放位置')));
+                }
+              },
+              child: const Text('確認'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true && selectedLocation != null) {
+      try {
+        setState(() => _isLoading = true);
+        await _apiService.put('/assets/batch/location', {
+          'assetIds': _selectedAssetIds.toList(),
+          'newValue': selectedLocation,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('批次變更存放位置成功')));
+        }
+        _fetchAssets();
+      } catch (e) {
+        _showError('發生錯誤: $e');
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -377,7 +542,7 @@ class _AssetListPageState extends State<AssetListPage> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        value: safeValue,
+        initialValue: safeValue,
         items: [
           const DropdownMenuItem<String>(value: null, child: Text('全部')),
           ...items.map(
@@ -420,13 +585,58 @@ class _AssetListPageState extends State<AssetListPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Button row for batch updates
+                        if (authProvider.canEdit)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _selectedAssetIds.isNotEmpty
+                                      ? _showBatchCustodianDialog
+                                      : null,
+                                  icon: const Icon(Icons.person),
+                                  label: const Text('變更保管人'),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: _selectedAssetIds.isNotEmpty
+                                      ? _showBatchLocationDialog
+                                      : null,
+                                  icon: const Icon(Icons.location_on),
+                                  label: const Text('變更存放位置'),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  '已選取 ${_selectedAssetIds.length} 筆',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         // Data Table container
                         Expanded(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: SingleChildScrollView(
                               child: DataTable(
-                                headingRowColor: MaterialStateProperty.all(
+                                onSelectAll: (bool? selected) {
+                                  setState(() {
+                                    if (selected == true) {
+                                      _selectedAssetIds.addAll(
+                                        _assets.map((a) => a.id),
+                                      );
+                                    } else {
+                                      _selectedAssetIds.clear();
+                                    }
+                                  });
+                                },
+                                headingRowColor: WidgetStateProperty.all(
                                   Colors.grey.shade200,
                                 ),
                                 columns: const [
@@ -442,6 +652,20 @@ class _AssetListPageState extends State<AssetListPage> {
                                 rows: _assets
                                     .map(
                                       (asset) => DataRow(
+                                        selected: _selectedAssetIds.contains(
+                                          asset.id,
+                                        ),
+                                        onSelectChanged: (bool? selected) {
+                                          setState(() {
+                                            if (selected == true) {
+                                              _selectedAssetIds.add(asset.id);
+                                            } else {
+                                              _selectedAssetIds.remove(
+                                                asset.id,
+                                              );
+                                            }
+                                          });
+                                        },
                                         cells: [
                                           DataCell(
                                             Row(

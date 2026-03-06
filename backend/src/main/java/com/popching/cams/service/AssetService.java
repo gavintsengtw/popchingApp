@@ -21,4 +21,8 @@ public interface AssetService {
             String keyword, Pageable pageable);
 
     void voidAsset(String id);
+
+    void batchUpdateCustodian(List<String> assetIds, String newCustodian);
+
+    void batchUpdateLocation(List<String> assetIds, String newLocation);
 }

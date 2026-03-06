@@ -116,7 +116,7 @@ class _RoleFunctionListPageState extends State<RoleFunctionListPage> {
                       decoration: const InputDecoration(
                         labelText: 'Group (群組)',
                       ),
-                      value: selectedRoleId,
+                      initialValue: selectedRoleId,
                       items: [
                         const DropdownMenuItem<String>(
                           value: null,
@@ -140,7 +140,7 @@ class _RoleFunctionListPageState extends State<RoleFunctionListPage> {
                       decoration: const InputDecoration(
                         labelText: 'Function (功能)',
                       ),
-                      value: selectedFuncId,
+                      initialValue: selectedFuncId,
                       items: [
                         const DropdownMenuItem<String>(
                           value: null,
@@ -274,7 +274,7 @@ class _RoleFunctionListPageState extends State<RoleFunctionListPage> {
               labelText: '群組 (Group)',
               border: OutlineInputBorder(),
             ),
-            value: _selectedSearchRoleId,
+            initialValue: _selectedSearchRoleId,
             items: [
               const DropdownMenuItem<String>(
                 value: null,
@@ -299,7 +299,7 @@ class _RoleFunctionListPageState extends State<RoleFunctionListPage> {
               labelText: '功能 (Function)',
               border: OutlineInputBorder(),
             ),
-            value: _selectedSearchFuncId,
+            initialValue: _selectedSearchFuncId,
             items: [
               const DropdownMenuItem<String>(
                 value: null,

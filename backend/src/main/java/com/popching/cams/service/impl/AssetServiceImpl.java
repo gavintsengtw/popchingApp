@@ -20,7 +20,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 import jakarta.persistence.criteria.Predicate;
+
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +160,15 @@ public class AssetServiceImpl implements AssetService {
         history.setRegionId(asset.getRegionId());
         history.setRagicSh(asset.getRagicSh());
         history.setRagicId(asset.getRagicId());
+
+        // Tracking fields
+        history.setChangeType("資料變更");
+        history.setChangeDte(LocalDateTime.now());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            history.setChangeUser(auth.getName());
+        }
+
         fixbaseHisRepository.save(history);
 
         mapRequestToAsset(request, asset);
@@ -266,6 +279,141 @@ public class AssetServiceImpl implements AssetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));
         asset.setStatus("V"); // "V" denotes Void in F02_USETYPE
         assetRepository.save(asset);
+
+        // Record history for void
+        FixbaseHis history = new FixbaseHis();
+        history.setId(UUID.randomUUID().toString());
+        history.setMainClass(asset.getMainClass());
+        history.setMidClass(asset.getMidClass());
+        history.setYear(asset.getYear());
+        history.setBatch(asset.getBatch());
+        history.setAssetCode(asset.getAssetCode());
+        history.setBrand(asset.getBrand());
+        history.setSpecification(asset.getSpecification());
+        history.setName(asset.getName());
+        history.setColor(asset.getColor());
+        history.setQuantity(asset.getQuantity());
+        history.setUnitPrice(asset.getUnitPrice());
+        history.setTotalPrice(asset.getTotalPrice());
+        history.setUserDept(asset.getUserDept());
+        history.setCustodian(asset.getCustodian());
+        history.setLocation(asset.getLocation());
+        history.setPurchaseDate(asset.getPurchaseDate());
+        history.setUsefulLife(asset.getUsefulLife());
+        history.setWarrantyDate(asset.getWarrantyDate());
+        history.setPcName(asset.getPcName());
+        history.setFileDescription(asset.getFileDescription());
+        history.setRemark(asset.getRemark());
+        history.setPhotoName(asset.getPhotoName());
+        history.setStatus(asset.getStatus()); // Will be "V"
+        history.setLeaseDept(asset.getLeaseDept());
+        history.setSize(asset.getSize());
+        history.setCreatedBy(asset.getCreatedBy());
+        history.setLastModifiedBy(asset.getLastModifiedBy());
+        history.setImgIdList(asset.getImgIdList());
+        history.setClassType(asset.getClassType());
+        history.setRegionId(asset.getRegionId());
+        history.setRagicSh(asset.getRagicSh());
+        history.setRagicId(asset.getRagicId());
+
+        // Tracking fields
+        history.setChangeType("資料作廢");
+        history.setChangeDte(LocalDateTime.now());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            history.setChangeUser(auth.getName());
+        }
+
+        fixbaseHisRepository.save(history);
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdateCustodian(List<String> assetIds, String newCustodian) {
+        User user = null;
+        if (newCustodian != null && !newCustodian.isEmpty()) {
+            user = userRepository.findByUsername(newCustodian).orElse(null);
+        }
+
+        for (String id : assetIds) {
+            Asset asset = assetRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));
+
+            asset.setCustodian(newCustodian);
+            if (user != null) {
+                if (user.getDepartments() != null && !user.getDepartments().isEmpty()) {
+                    asset.setUserDept(user.getDepartments().iterator().next().getId());
+                } else if (user.getUserDept() != null) {
+                    asset.setUserDept(user.getUserDept());
+                }
+            }
+
+            assetRepository.save(asset);
+
+            String changeType = "變更保管人";
+            createHistoryRecord(asset, changeType);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdateLocation(List<String> assetIds, String newLocation) {
+        for (String id : assetIds) {
+            Asset asset = assetRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));
+
+            asset.setLocation(newLocation);
+            assetRepository.save(asset);
+
+            String changeType = "變更存放位置";
+            createHistoryRecord(asset, changeType);
+        }
+    }
+
+    private void createHistoryRecord(Asset asset, String changeType) {
+        FixbaseHis history = new FixbaseHis();
+        history.setId(UUID.randomUUID().toString());
+        history.setMainClass(asset.getMainClass());
+        history.setMidClass(asset.getMidClass());
+        history.setYear(asset.getYear());
+        history.setBatch(asset.getBatch());
+        history.setAssetCode(asset.getAssetCode());
+        history.setBrand(asset.getBrand());
+        history.setSpecification(asset.getSpecification());
+        history.setName(asset.getName());
+        history.setColor(asset.getColor());
+        history.setQuantity(asset.getQuantity());
+        history.setUnitPrice(asset.getUnitPrice());
+        history.setTotalPrice(asset.getTotalPrice());
+        history.setUserDept(asset.getUserDept());
+        history.setCustodian(asset.getCustodian());
+        history.setLocation(asset.getLocation());
+        history.setPurchaseDate(asset.getPurchaseDate());
+        history.setUsefulLife(asset.getUsefulLife());
+        history.setWarrantyDate(asset.getWarrantyDate());
+        history.setPcName(asset.getPcName());
+        history.setFileDescription(asset.getFileDescription());
+        history.setRemark(asset.getRemark());
+        history.setPhotoName(asset.getPhotoName());
+        history.setStatus(asset.getStatus());
+        history.setLeaseDept(asset.getLeaseDept());
+        history.setSize(asset.getSize());
+        history.setCreatedBy(asset.getCreatedBy());
+        history.setLastModifiedBy(asset.getLastModifiedBy());
+        history.setImgIdList(asset.getImgIdList());
+        history.setClassType(asset.getClassType());
+        history.setRegionId(asset.getRegionId());
+        history.setRagicSh(asset.getRagicSh());
+        history.setRagicId(asset.getRagicId());
+
+        history.setChangeType(changeType);
+        history.setChangeDte(LocalDateTime.now());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            history.setChangeUser(auth.getName());
+        }
+
+        fixbaseHisRepository.save(history);
     }
 
     private void mapRequestToAsset(AssetRequest request, Asset asset) {
@@ -295,6 +443,8 @@ public class AssetServiceImpl implements AssetService {
         asset.setRemark(request.getRemark());
         asset.setColor(request.getColor());
         asset.setFileDescription(request.getFileDescription());
+        asset.setClassType(request.getClassType());
+        asset.setRegionId(request.getRegionId());
     }
 
     private void populateTransientFields(List<Asset> assets) {
