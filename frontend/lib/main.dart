@@ -18,8 +18,11 @@ import 'pages/asset/region_page.dart';
 import 'pages/settings/role_list_page.dart';
 import 'pages/settings/department_list_page.dart';
 import 'pages/settings/role_function_list_page.dart';
+import 'pages/asset/asset_show_page.dart';
+import 'package:flutter_web_plugins/url_strategy.dart'; // 引入 web route
 
 void main() {
+  usePathUrlStrategy(); // 移除網址列的 # 號
   runApp(
     MultiProvider(
       providers: [
@@ -48,6 +51,20 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/profile': (context) => const UserProfilePage(),
         '/change-password': (context) => const ChangePasswordPage(),
+      },
+      onGenerateRoute: (settings) {
+        // 捕捉 /assetsShow/{assetCode} 路徑
+        if (settings.name != null &&
+            settings.name!.startsWith('/assetsShow/')) {
+          final uri = Uri.parse(settings.name!);
+          if (uri.pathSegments.length == 2) {
+            final assetCode = uri.pathSegments[1];
+            return MaterialPageRoute(
+              builder: (context) => AssetShowPage(assetCode: assetCode),
+            );
+          }
+        }
+        return null;
       },
     );
   }

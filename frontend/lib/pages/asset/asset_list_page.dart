@@ -434,17 +434,28 @@ class _AssetListPageState extends State<AssetListPage> {
   Widget _buildSearchPanel() {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      margin: const EdgeInsets.only(bottom: 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '查詢條件',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(Icons.search, color: Colors.blue.shade700, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  '🔍 篩選條件 (Search Panel)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey.shade800,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const Divider(height: 32),
             Wrap(
               spacing: 16,
               runSpacing: 16,
@@ -484,10 +495,13 @@ class _AssetListPageState extends State<AssetListPage> {
                   width: 300,
                   child: TextField(
                     controller: _keywordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: '全文檢索 (名稱, 型號, 編號)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: true,
                     ),
                     onSubmitted: (_) {
                       _currentPage = 0;
@@ -503,10 +517,19 @@ class _AssetListPageState extends State<AssetListPage> {
               children: [
                 OutlinedButton.icon(
                   onPressed: _resetSearch,
-                  icon: const Icon(Icons.clear),
+                  icon: const Icon(Icons.clear, size: 18),
                   label: const Text('清除條件'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: () {
                     setState(() {
@@ -514,8 +537,23 @@ class _AssetListPageState extends State<AssetListPage> {
                     });
                     _fetchAssets();
                   },
-                  icon: const Icon(Icons.search),
-                  label: const Text('查詢'),
+                  icon: const Icon(Icons.search, size: 18),
+                  label: const Text(
+                    '查詢資料',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -531,7 +569,6 @@ class _AssetListPageState extends State<AssetListPage> {
     List<DropdownItem> items,
     ValueChanged<String?> onChanged,
   ) {
-    // 檢查目前選取的值是否存在於 items 中，避免 value 不存在導致 error
     bool valueExists = items.any((item) => item.value == value);
     String? safeValue = valueExists ? value : null;
 
@@ -540,7 +577,8 @@ class _AssetListPageState extends State<AssetListPage> {
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          isDense: true,
         ),
         initialValue: safeValue,
         items: [
@@ -560,251 +598,400 @@ class _AssetListPageState extends State<AssetListPage> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('設備清單'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 1,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('新增設備', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              icon: const Icon(Icons.add, color: Colors.white, size: 18),
+              label: const Text(
+                '新增設備',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade600,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
               onPressed: () => _navigateToForm(),
             ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildSearchPanel(),
-          Expanded(
-            child: _isLoading && _assets.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : Card(
-                    margin: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Button row for batch updates
-                        if (authProvider.canEdit)
-                          Padding(
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            _buildSearchPanel(),
+            Expanded(
+              child: _isLoading && _assets.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Button row for batch updates
+                          if (authProvider.canEdit &&
+                              _selectedAssetIds.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0,
+                                vertical: 12.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.blue.shade100,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.blue.shade700,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '已選取 ${_selectedAssetIds.length} 筆',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade800,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  ElevatedButton.icon(
+                                    onPressed: _showBatchCustodianDialog,
+                                    icon: const Icon(Icons.person, size: 18),
+                                    label: const Text('變更保管人'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.blue.shade700,
+                                      elevation: 0,
+                                      side: BorderSide(
+                                        color: Colors.blue.shade200,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    onPressed: _showBatchLocationDialog,
+                                    icon: const Icon(
+                                      Icons.location_on,
+                                      size: 18,
+                                    ),
+                                    label: const Text('變更存放位置'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.blue.shade700,
+                                      elevation: 0,
+                                      side: BorderSide(
+                                        color: Colors.blue.shade200,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          // Data Table container
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SingleChildScrollView(
+                                child: DataTable(
+                                  headingRowHeight: 56,
+                                  dataRowMaxHeight: 64,
+                                  dataRowMinHeight: 56,
+                                  onSelectAll: (bool? selected) {
+                                    setState(() {
+                                      if (selected == true) {
+                                        _selectedAssetIds.addAll(
+                                          _assets.map((a) => a.id),
+                                        );
+                                      } else {
+                                        _selectedAssetIds.clear();
+                                      }
+                                    });
+                                  },
+                                  headingTextStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                  headingRowColor: WidgetStateProperty.all(
+                                    Colors.grey.shade100,
+                                  ),
+                                  columns: const [
+                                    DataColumn(label: Text('動作 (Action)')),
+                                    DataColumn(label: Text('資產編號')),
+                                    DataColumn(label: Text('名稱')),
+                                    DataColumn(label: Text('購買日期')),
+                                    DataColumn(label: Text('型號/規格')),
+                                    DataColumn(label: Text('數量')),
+                                    DataColumn(label: Text('保管人/部門')),
+                                    DataColumn(label: Text('存放位置')),
+                                  ],
+                                  rows: _assets
+                                      .map(
+                                        (asset) => DataRow(
+                                          selected: _selectedAssetIds.contains(
+                                            asset.id,
+                                          ),
+                                          onSelectChanged: (bool? selected) {
+                                            setState(() {
+                                              if (selected == true) {
+                                                _selectedAssetIds.add(asset.id);
+                                              } else {
+                                                _selectedAssetIds.remove(
+                                                  asset.id,
+                                                );
+                                              }
+                                            });
+                                          },
+                                          cells: [
+                                            DataCell(
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (authProvider.canEdit)
+                                                    Container(
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            right: 8,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            Colors.blue.shade50,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
+                                                      ),
+                                                      child: IconButton(
+                                                        icon: Icon(
+                                                          Icons.edit,
+                                                          color: Colors
+                                                              .blue
+                                                              .shade700,
+                                                          size: 18,
+                                                        ),
+                                                        onPressed: () =>
+                                                            _navigateToForm(
+                                                              asset,
+                                                            ),
+                                                        tooltip: '編輯',
+                                                        constraints:
+                                                            const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                        padding:
+                                                            EdgeInsets.zero,
+                                                      ),
+                                                    ),
+                                                  if (authProvider.canDelete)
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            Colors.red.shade50,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
+                                                      ),
+                                                      child: IconButton(
+                                                        icon: Icon(
+                                                          Icons.block,
+                                                          color: Colors
+                                                              .red
+                                                              .shade700,
+                                                          size: 18,
+                                                        ),
+                                                        onPressed: () =>
+                                                            _voidAsset(
+                                                              asset.id,
+                                                            ),
+                                                        tooltip: '作廢',
+                                                        constraints:
+                                                            const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                        padding:
+                                                            EdgeInsets.zero,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                asset.assetCode,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            DataCell(Text(asset.name)),
+                                            DataCell(
+                                              Text(
+                                                asset.purchaseDate != null
+                                                    ? "${asset.purchaseDate!.year}-${asset.purchaseDate!.month.toString().padLeft(2, '0')}-${asset.purchaseDate!.day.toString().padLeft(2, '0')}"
+                                                    : '',
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                '${asset.brand ?? ""} / ${asset.specification ?? ""}',
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                asset.quantity?.toString() ??
+                                                    '',
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                '${asset.custodianName ?? asset.custodian ?? ""} / ${asset.departmentName ?? asset.userDept ?? ""}',
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(
+                                                asset.locationName ??
+                                                    asset.location ??
+                                                    '',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Pagination Controls
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: const BorderRadius.vertical(
+                                bottom: Radius.circular(12),
+                              ),
+                              border: Border(
+                                top: BorderSide(color: Colors.grey.shade200),
+                              ),
+                            ),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8.0,
+                              horizontal: 24.0,
+                              vertical: 12.0,
                             ),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                ElevatedButton.icon(
-                                  onPressed: _selectedAssetIds.isNotEmpty
-                                      ? _showBatchCustodianDialog
-                                      : null,
-                                  icon: const Icon(Icons.person),
-                                  label: const Text('變更保管人'),
+                                Text(
+                                  '共 $_totalRecords 筆資料',
+                                  style: TextStyle(color: Colors.grey.shade700),
                                 ),
+                                Container(
+                                  height: 24,
+                                  width: 1,
+                                  color: Colors.grey.shade300,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                ),
+                                const Text('每頁顯示:'),
                                 const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  onPressed: _selectedAssetIds.isNotEmpty
-                                      ? _showBatchLocationDialog
-                                      : null,
-                                  icon: const Icon(Icons.location_on),
-                                  label: const Text('變更存放位置'),
+                                DropdownButton<int>(
+                                  value: _pageSize,
+                                  underline: const SizedBox(),
+                                  focusColor: Colors.transparent,
+                                  items: [10, 20, 50, 100].map((size) {
+                                    return DropdownMenuItem<int>(
+                                      value: size,
+                                      child: Text(size.toString()),
+                                    );
+                                  }).toList(),
+                                  onChanged: (int? newSize) {
+                                    if (newSize != null) {
+                                      setState(() {
+                                        _pageSize = newSize;
+                                        _currentPage = 0;
+                                      });
+                                      _fetchAssets();
+                                    }
+                                  },
                                 ),
                                 const SizedBox(width: 16),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_left),
+                                  splashRadius: 20,
+                                  onPressed: _currentPage > 0
+                                      ? () {
+                                          setState(() {
+                                            _currentPage--;
+                                          });
+                                          _fetchAssets();
+                                        }
+                                      : null,
+                                ),
                                 Text(
-                                  '已選取 ${_selectedAssetIds.length} 筆',
+                                  '第 ${_currentPage + 1} 頁',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w500,
                                   ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right),
+                                  splashRadius: 20,
+                                  onPressed:
+                                      (_currentPage + 1) * _pageSize <
+                                          _totalRecords
+                                      ? () {
+                                          setState(() {
+                                            _currentPage++;
+                                          });
+                                          _fetchAssets();
+                                        }
+                                      : null,
                                 ),
                               ],
                             ),
                           ),
-                        // Data Table container
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                onSelectAll: (bool? selected) {
-                                  setState(() {
-                                    if (selected == true) {
-                                      _selectedAssetIds.addAll(
-                                        _assets.map((a) => a.id),
-                                      );
-                                    } else {
-                                      _selectedAssetIds.clear();
-                                    }
-                                  });
-                                },
-                                headingRowColor: WidgetStateProperty.all(
-                                  Colors.grey.shade200,
-                                ),
-                                columns: const [
-                                  DataColumn(label: Text('動作 (Action)')),
-                                  DataColumn(label: Text('資產編號')),
-                                  DataColumn(label: Text('名稱')),
-                                  DataColumn(label: Text('購買日期')),
-                                  DataColumn(label: Text('型號/規格')),
-                                  DataColumn(label: Text('數量')),
-                                  DataColumn(label: Text('保管人/部門')),
-                                  DataColumn(label: Text('存放位置')),
-                                ],
-                                rows: _assets
-                                    .map(
-                                      (asset) => DataRow(
-                                        selected: _selectedAssetIds.contains(
-                                          asset.id,
-                                        ),
-                                        onSelectChanged: (bool? selected) {
-                                          setState(() {
-                                            if (selected == true) {
-                                              _selectedAssetIds.add(asset.id);
-                                            } else {
-                                              _selectedAssetIds.remove(
-                                                asset.id,
-                                              );
-                                            }
-                                          });
-                                        },
-                                        cells: [
-                                          DataCell(
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                if (authProvider.canEdit)
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.edit,
-                                                      color: Colors.blue,
-                                                      size: 20,
-                                                    ),
-                                                    onPressed: () =>
-                                                        _navigateToForm(asset),
-                                                    tooltip: '編輯',
-                                                  ),
-                                                if (authProvider.canDelete)
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.block,
-                                                      color: Colors.red,
-                                                      size: 20,
-                                                    ),
-                                                    onPressed: () =>
-                                                        _voidAsset(asset.id),
-                                                    tooltip: '作廢',
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          DataCell(Text(asset.assetCode)),
-                                          DataCell(Text(asset.name)),
-                                          DataCell(
-                                            Text(
-                                              asset.purchaseDate != null
-                                                  ? "${asset.purchaseDate!.year}-${asset.purchaseDate!.month.toString().padLeft(2, '0')}-${asset.purchaseDate!.day.toString().padLeft(2, '0')}"
-                                                  : '',
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Text(
-                                              '${asset.brand ?? ""} / ${asset.specification ?? ""}',
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Text(
-                                              asset.quantity?.toString() ?? '',
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Text(
-                                              '${asset.custodianName ?? asset.custodian ?? ""} / ${asset.departmentName ?? asset.userDept ?? ""}',
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Text(
-                                              asset.locationName ??
-                                                  asset.location ??
-                                                  '',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Pagination Controls
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text('共 $_totalRecords 筆資料'),
-                              const SizedBox(width: 16),
-                              const Text('每頁顯示:'),
-                              const SizedBox(width: 8),
-                              DropdownButton<int>(
-                                value: _pageSize,
-                                items: [10, 20, 50, 100].map((size) {
-                                  return DropdownMenuItem<int>(
-                                    value: size,
-                                    child: Text(size.toString()),
-                                  );
-                                }).toList(),
-                                onChanged: (int? newSize) {
-                                  if (newSize != null) {
-                                    setState(() {
-                                      _pageSize = newSize;
-                                      _currentPage = 0;
-                                    });
-                                    _fetchAssets();
-                                  }
-                                },
-                              ),
-                              const SizedBox(width: 16),
-                              IconButton(
-                                icon: const Icon(Icons.chevron_left),
-                                onPressed: _currentPage > 0
-                                    ? () {
-                                        setState(() {
-                                          _currentPage--;
-                                        });
-                                        _fetchAssets();
-                                      }
-                                    : null,
-                              ),
-                              Text('第 ${_currentPage + 1} 頁'),
-                              IconButton(
-                                icon: const Icon(Icons.chevron_right),
-                                onPressed:
-                                    (_currentPage + 1) * _pageSize <
-                                        _totalRecords
-                                    ? () {
-                                        setState(() {
-                                          _currentPage++;
-                                        });
-                                        _fetchAssets();
-                                      }
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

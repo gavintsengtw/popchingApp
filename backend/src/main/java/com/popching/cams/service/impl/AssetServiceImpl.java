@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Collections;
+import java.util.Objects;
 
 @Service
 public class AssetServiceImpl implements AssetService {
@@ -219,6 +220,17 @@ public class AssetServiceImpl implements AssetService {
     public Asset getAssetById(String id) {
         Asset asset = assetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", "id", id));
+        populateTransientFields(Collections.singletonList(asset));
+        return asset;
+    }
+
+    @Override
+    public Asset getAssetByCode(String code) {
+        List<Asset> assets = assetRepository.findByAssetCode(code);
+        if (assets == null || assets.isEmpty()) {
+            throw new ResourceNotFoundException("Asset", "assetCode", code);
+        }
+        Asset asset = assets.get(0);
         populateTransientFields(Collections.singletonList(asset));
         return asset;
     }
@@ -471,6 +483,33 @@ public class AssetServiceImpl implements AssetService {
                 : itemDictionaryRepository.findByCodeIdAndItemIdIn("FLOOR", new ArrayList<>(locationIds)).stream()
                         .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
 
+        Set<String> mainClassIds = assets.stream().map(Asset::getMainClass).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<String> midClassIds = assets.stream().map(Asset::getMidClass).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<String> statusIds = assets.stream().map(Asset::getStatus).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<String> regionIds = assets.stream().map(Asset::getRegionId).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<String> classTypeIds = assets.stream().map(Asset::getClassType).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<String, String> mainClassMap = mainClassIds.isEmpty() ? Collections.emptyMap()
+                : itemDictionaryRepository.findByCodeIdAndItemIdIn("MAINCLASS", new ArrayList<>(mainClassIds)).stream()
+                        .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
+        Map<String, String> midClassMap = midClassIds.isEmpty() ? Collections.emptyMap()
+                : itemDictionaryRepository.findByCodeIdAndItemIdIn("MIDCLASS", new ArrayList<>(midClassIds)).stream()
+                        .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
+        Map<String, String> statusMap = statusIds.isEmpty() ? Collections.emptyMap()
+                : itemDictionaryRepository.findByCodeIdAndItemIdIn("USETYPE", new ArrayList<>(statusIds)).stream()
+                        .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
+        Map<String, String> regionMap = regionIds.isEmpty() ? Collections.emptyMap()
+                : itemDictionaryRepository.findByCodeIdAndItemIdIn("REGION", new ArrayList<>(regionIds)).stream()
+                        .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
+        Map<String, String> classTypeMap = classTypeIds.isEmpty() ? Collections.emptyMap()
+                : itemDictionaryRepository.findByCodeIdAndItemIdIn("CLASSTYPE", new ArrayList<>(classTypeIds)).stream()
+                        .collect(Collectors.toMap(ItemDictionary::getItemId, ItemDictionary::getItemName));
+
         for (Asset asset : assets) {
             if (asset.getCustodian() != null) {
                 User user = userMap.get(asset.getCustodian());
@@ -484,6 +523,16 @@ public class AssetServiceImpl implements AssetService {
             if (asset.getLocation() != null) {
                 asset.setLocationName(locationMap.get(asset.getLocation()));
             }
+            if (asset.getMainClass() != null)
+                asset.setMainClassName(mainClassMap.get(asset.getMainClass()));
+            if (asset.getMidClass() != null)
+                asset.setMidClassName(midClassMap.get(asset.getMidClass()));
+            if (asset.getStatus() != null)
+                asset.setStatusName(statusMap.get(asset.getStatus()));
+            if (asset.getRegionId() != null)
+                asset.setRegionName(regionMap.get(asset.getRegionId()));
+            if (asset.getClassType() != null)
+                asset.setClassTypeName(classTypeMap.get(asset.getClassType()));
         }
     }
 }

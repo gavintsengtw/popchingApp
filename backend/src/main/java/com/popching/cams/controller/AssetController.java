@@ -50,6 +50,13 @@ public class AssetController {
         return ResponseEntity.ok().body(asset);
     }
 
+    // 免登入公開 API，用於 QRCode 或對外展示
+    @GetMapping("/public/{code}")
+    public ResponseEntity<Asset> getAssetByCode(@PathVariable(value = "code") String assetCode) {
+        Asset asset = assetService.getAssetByCode(assetCode);
+        return ResponseEntity.ok().body(asset);
+    }
+
     @PostMapping(consumes = { "multipart/form-data" }) // Added consumes
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('PERM_ADD')")
     public ResponseEntity<Asset> createAsset(

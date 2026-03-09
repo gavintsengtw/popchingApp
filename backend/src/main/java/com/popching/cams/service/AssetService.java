@@ -15,6 +15,8 @@ public interface AssetService {
 
     Asset getAssetById(String id);
 
+    Asset getAssetByCode(String code);
+
     List<Asset> getAllAssets();
 
     Page<Asset> searchAssets(String mainClass, String midClass, String year, String custodian, String location,

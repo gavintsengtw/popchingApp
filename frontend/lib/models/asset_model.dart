@@ -26,6 +26,11 @@ class Asset {
   final String? custodianName;
   final String? departmentName;
   final String? locationName;
+  final String? mainClassName;
+  final String? midClassName;
+  final String? statusName;
+  final String? regionName;
+  final String? classTypeName;
   final List<AssetImage> images;
 
   Asset({
@@ -56,6 +61,11 @@ class Asset {
     this.custodianName,
     this.departmentName,
     this.locationName,
+    this.mainClassName,
+    this.midClassName,
+    this.statusName,
+    this.regionName,
+    this.classTypeName,
     this.images = const [],
   });
 
@@ -98,6 +108,11 @@ class Asset {
       custodianName: json['custodianName'],
       departmentName: json['departmentName'],
       locationName: json['locationName'],
+      mainClassName: json['mainClassName'],
+      midClassName: json['midClassName'],
+      statusName: json['statusName'],
+      regionName: json['regionName'],
+      classTypeName: json['classTypeName'],
       images:
           (json['images'] as List<dynamic>?)
               ?.map((e) => AssetImage.fromJson(e))

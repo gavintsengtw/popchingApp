@@ -127,6 +127,21 @@ public class Asset extends BaseEntity {
     @Transient
     private String locationName;
 
+    @Transient
+    private String mainClassName;
+
+    @Transient
+    private String midClassName;
+
+    @Transient
+    private String statusName;
+
+    @Transient
+    private String regionName;
+
+    @Transient
+    private String classTypeName;
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "F02_NO", referencedColumnName = "F02_NO")
     private java.util.List<FixUploadFile> images;
