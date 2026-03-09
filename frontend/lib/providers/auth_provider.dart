@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/storage_service.dart';
 import '../services/api_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   bool _isAuthenticated = false;
   bool _isDefaultPassword = false;
@@ -36,7 +35,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> checkLoginStatus() async {
-    String? token = await _storage.read(key: 'jwt_token');
+    String? token = await StorageService.read(key: 'jwt_token');
     _isAuthenticated = token != null;
     if (_isAuthenticated) {
       await _fetchPermissions();
@@ -54,7 +53,10 @@ class AuthProvider with ChangeNotifier {
 
       // The backend returns an 'accessToken' instead of 'token' in the JwtAuthenticationResponse
       if (response != null && response['accessToken'] != null) {
-        await _storage.write(key: 'jwt_token', value: response['accessToken']);
+        await StorageService.write(
+          key: 'jwt_token',
+          value: response['accessToken'],
+        );
         _isAuthenticated = true;
         _isDefaultPassword = response['isDefaultPassword'] == 1;
         await _fetchPermissions();
@@ -69,7 +71,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: 'jwt_token');
+    await StorageService.delete(key: 'jwt_token');
     _isAuthenticated = false;
     _canAdd = false;
     _canEdit = false;

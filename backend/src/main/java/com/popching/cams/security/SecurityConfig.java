@@ -12,8 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.popching.cams.security.JwtAuthenticationEntryPoint;
-import com.popching.cams.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -40,13 +38,20 @@ public class SecurityConfig {
 
             @Override
             public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                // Try BCrypt first (it handles salt checks and might log warning if format is
-                // invalid)
-                if (delegate.matches(rawPassword, encodedPassword)) {
-                    return true;
+                if (encodedPassword == null)
+                    return false;
+                String trimmedEncoded = encodedPassword.trim();
+
+                // Try BCrypt first
+                try {
+                    if (delegate.matches(rawPassword, trimmedEncoded)) {
+                        return true;
+                    }
+                } catch (IllegalArgumentException e) {
+                    // Ignore, might not be a valid BCrypt string
                 }
                 // Fallback to plain text check for legacy passwords
-                return rawPassword.toString().equals(encodedPassword);
+                return rawPassword.toString().equals(trimmedEncoded);
             }
         };
     }

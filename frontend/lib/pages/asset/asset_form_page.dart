@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide AssetImage;
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../services/storage_service.dart';
 import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -27,7 +27,6 @@ class AssetFormPage extends StatefulWidget {
 
 class _AssetFormPageState extends State<AssetFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final _storage = const FlutterSecureStorage();
   final ImagePicker _picker = ImagePicker();
 
   // Controllers
@@ -164,7 +163,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
   }
 
   Future<void> _loadToken() async {
-    final token = await _storage.read(key: 'jwt_token');
+    final token = await StorageService.read(key: 'jwt_token');
     if (mounted) {
       setState(() {
         _token = token;
@@ -174,7 +173,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchCustodians() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/users'),
         headers: {
@@ -221,7 +220,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchLocations() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/FLOOR'),
         headers: {
@@ -257,7 +256,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchUseTypes() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/USETYPE'),
         headers: {
@@ -286,7 +285,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchClassTypes() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/CLASSTYPE'),
         headers: {
@@ -315,7 +314,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchRegions() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/REGION'),
         headers: {
@@ -364,7 +363,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchMainClasses() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/MAINCLASS'),
         headers: {
@@ -400,7 +399,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
 
   Future<void> _fetchMidClasses() async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/dictionary/code/MIDCLASS'),
         headers: {
@@ -468,7 +467,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       var request = http.MultipartRequest(
         widget.asset == null ? 'POST' : 'PUT',
         Uri.parse(

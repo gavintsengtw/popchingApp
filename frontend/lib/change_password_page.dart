@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart'; // For kIsWeb, defaultTargetPlatform
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'services/storage_service.dart';
 import 'package:http/http.dart' as http;
 
 class ChangePasswordPage extends StatefulWidget {
@@ -16,7 +16,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _storage = const FlutterSecureStorage();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -41,7 +40,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
+      final token = await StorageService.read(key: 'jwt_token');
       if (token == null) {
         throw Exception("No token found");
       }
@@ -60,7 +59,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
       if (response.statusCode == 200) {
         // Success
-        await _storage.delete(
+        await StorageService.delete(
           key: 'jwt_token',
         ); // Clear token to force re-login
         if (mounted) {
