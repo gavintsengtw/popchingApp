@@ -1,0 +1,67 @@
+# ==================
+# Backend (Java / Spring Boot / Maven)
+# ==================
+backend/target/
+backend/.mvn/
+backend/*.iml
+*.class
+*.jar
+*.war
+*.ear
+
+# ==================
+# Frontend (Flutter / Dart)
+# ==================
+frontend/.dart_tool/
+frontend/.packages
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.pub-cache/
+frontend/pubspec.lock
+
+# Android
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/app/build/
+frontend/android/build/
+
+# iOS
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+
+# Web
+frontend/web/flutter_bootstrap.js
+
+# ==================
+# IDE / Editor
+# ==================
+.idea/
+*.iml
+.vscode/settings.json
+
+# ==================
+# OS Files
+# ==================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ==================
+# Gemini / Antigravity
+# ==================
+.gemini/
+
+# ==================
+# Uploads (runtime data)
+# ==================
+uploads/
+
+# ==================
+# Misc
+# ==================
+*.log
+*.resolved
